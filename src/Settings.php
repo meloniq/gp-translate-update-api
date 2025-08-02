@@ -1,6 +1,17 @@
 <?php
+/**
+ * Settings for GP Translate Update API.
+ *
+ * @package Meloniq\GpTranslateUpdateApi
+ */
+
 namespace Meloniq\GpTranslateUpdateApi;
 
+/**
+ * Settings class.
+ *
+ * This class handles the settings for the GP Translate Update API plugin.
+ */
 class Settings {
 
 	/**
@@ -10,7 +21,6 @@ class Settings {
 	 */
 	public function __construct() {
 		add_action( 'admin_init', array( $this, 'init_settings' ), 10 );
-
 	}
 
 	/**
@@ -18,7 +28,7 @@ class Settings {
 	 *
 	 * @return void
 	 */
-	public function init_settings() : void {
+	public function init_settings(): void {
 		// Section: Update API.
 		add_settings_section(
 			'gptua_section',
@@ -29,7 +39,6 @@ class Settings {
 
 		// Option: API Key.
 		$this->register_field_api_key();
-
 	}
 
 	/**
@@ -37,7 +46,7 @@ class Settings {
 	 *
 	 * @return void
 	 */
-	public function render_section() : void {
+	public function render_section(): void {
 		esc_html_e( 'Settings for Update API access.', 'gp-translate-update-api' );
 	}
 
@@ -46,7 +55,7 @@ class Settings {
 	 *
 	 * @return void
 	 */
-	public function register_field_api_key() : void {
+	public function register_field_api_key(): void {
 		$field_name    = 'gptua_api_key';
 		$section_name  = 'gptua_section';
 		$settings_name = 'gptua_settings';
@@ -81,7 +90,7 @@ class Settings {
 	 *
 	 * @return void
 	 */
-	public function render_field_api_key() : void {
+	public function render_field_api_key(): void {
 		$field_name = 'gptua_api_key';
 
 		$api_key = get_option( $field_name, '' );
@@ -90,5 +99,4 @@ class Settings {
 		<p class="description"><?php esc_html_e( 'Enter the Update API Key.', 'gp-translate-update-api' ); ?></p>
 		<?php
 	}
-
 }

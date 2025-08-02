@@ -1,4 +1,12 @@
 <?php
+/**
+ * REST API controller for GP Translate Update API.
+ *
+ * This class handles the REST API requests for checking updates of themes, plugins, and core translations.
+ *
+ * @package Meloniq\GpTranslateUpdateApi
+ */
+
 namespace Meloniq\GpTranslateUpdateApi;
 
 use WP_Error;
@@ -6,6 +14,9 @@ use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
 
+/**
+ * REST API controller for GP Translate Update API.
+ */
 class Rest extends WP_REST_Controller {
 
 	/**
@@ -15,7 +26,6 @@ class Rest extends WP_REST_Controller {
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ), 10 );
-
 	}
 
 	/**
@@ -23,13 +33,13 @@ class Rest extends WP_REST_Controller {
 	 *
 	 * @return void
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		register_rest_route(
 			'translations',
 			'/update-check/1.1',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'handle_update_check' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'handle_update_check' ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -55,8 +65,8 @@ class Rest extends WP_REST_Controller {
 			return new WP_Error( 'invalid_locale', __( 'Invalid locale data.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
 		}
 
-		$locales = array();
-		$supported_locales = wp_list_pluck( GP_Locales::locales(), 'slug' );//wp_locale
+		$locales           = array();
+		$supported_locales = wp_list_pluck( GP_Locales::locales(), 'slug' );// wp_locale
 		foreach ( $data['locale'] as $locale ) {
 			// Remove country code; e.g. pl_PL -> pl
 			$locale_slug = explode( '_', $locale )[0];
@@ -74,7 +84,6 @@ class Rest extends WP_REST_Controller {
 		if ( ! is_array( $data['translations'] ) ) {
 			$data['translations'] = array();
 		}
-
 
 		if ( empty( $data['plugins']['plugins'] ) && empty( $data['themes']['themes'] ) ) {
 			return new WP_Error( 'no_plugins_themes', __( 'No plugins or themes found.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
@@ -115,7 +124,7 @@ class Rest extends WP_REST_Controller {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function plugin_translations_check( array $plugins, array $translations, array $locales ) : WP_REST_Response {
+	public function plugin_translations_check( array $plugins, array $translations, array $locales ): WP_REST_Response {
 		$response = array(
 			'plugins'      => array(),
 			'translations' => array(),
@@ -128,8 +137,8 @@ class Rest extends WP_REST_Controller {
 			}
 
 			// Check if site_url host match TranslationsURI.
-			$site_url = parse_url( site_url() );
-			$translations_uri = parse_url( $plugin['TranslationsURI'] );
+			$site_url         = wp_parse_url( site_url() );
+			$translations_uri = wp_parse_url( $plugin['TranslationsURI'] );
 			if ( ! isset( $site_url['host'] ) || ! isset( $translations_uri['host'] ) ) {
 				continue;
 			}
@@ -163,7 +172,7 @@ class Rest extends WP_REST_Controller {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function theme_translations_check( array $themes, array $translations, array $locales ) : WP_REST_Response {
+	public function theme_translations_check( array $themes, array $translations, array $locales ): WP_REST_Response {
 		$response = array(
 			'themes'       => array(),
 			'translations' => array(),
@@ -176,8 +185,8 @@ class Rest extends WP_REST_Controller {
 			}
 
 			// Check if site_url host match TranslationsURI.
-			$site_url = parse_url( site_url() );
-			$translations_uri = parse_url( $plugin['TranslationsURI'] );
+			$site_url         = wp_parse_url( site_url() );
+			$translations_uri = wp_parse_url( $plugin['TranslationsURI'] );
 			if ( ! isset( $site_url['host'] ) || ! isset( $translations_uri['host'] ) ) {
 				continue;
 			}
@@ -201,6 +210,4 @@ class Rest extends WP_REST_Controller {
 
 		return new WP_REST_Response( $response, 200 );
 	}
-
-
 }
