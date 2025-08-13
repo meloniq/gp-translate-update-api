@@ -48,7 +48,7 @@ function setup() {
 	require_once trailingslashit( __DIR__ ) . 'src/class-settings.php';
 	require_once trailingslashit( __DIR__ ) . 'src/class-rest.php';
 
-	$gptua_translate['admin-page'] = new AdminPage();
+	$gptua_translate['admin-page'] = new Admin_Page();
 	$gptua_translate['settings']   = new Settings();
 	$gptua_translate['rest']       = new Rest();
 }

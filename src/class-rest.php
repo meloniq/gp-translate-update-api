@@ -13,6 +13,8 @@ use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
+use GP;
+use GP_Locales;
 
 /**
  * REST API controller for GP Translate Update API.
@@ -35,7 +37,7 @@ class Rest extends WP_REST_Controller {
 	 */
 	public function register_routes(): void {
 		register_rest_route(
-			'translations',
+			'gp/translations',
 			'/update-check/1.1',
 			array(
 				'methods'             => 'POST',
@@ -60,15 +62,19 @@ class Rest extends WP_REST_Controller {
 			return new WP_Error( 'invalid_data', __( 'Invalid data received.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
 		}
 
+		if ( empty( $data['item'] ) || ! is_string( $data['item'] ) ) {
+			return new WP_Error( 'invalid_item', __( 'Invalid item data.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
+		}
+
 		// Which locales we have to check for updates.
 		if ( empty( $data['locale'] ) || ! is_array( $data['locale'] ) ) {
 			return new WP_Error( 'invalid_locale', __( 'Invalid locale data.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
 		}
 
 		$locales           = array();
-		$supported_locales = wp_list_pluck( GP_Locales::locales(), 'slug' );// wp_locale
+		$supported_locales = wp_list_pluck( GP_Locales::locales(), 'slug' );
 		foreach ( $data['locale'] as $locale ) {
-			// Remove country code; e.g. pl_PL -> pl
+			// Remove country code; e.g. pl_PL -> pl.
 			$locale_slug = explode( '_', $locale )[0];
 			if ( in_array( $locale_slug, $supported_locales, true ) ) {
 				$locales[] = $locale_slug;
@@ -80,134 +86,105 @@ class Rest extends WP_REST_Controller {
 			return new WP_Error( 'no_locales', __( 'No supported locales found.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
 		}
 
-		// Translations that already exist on the site.
-		if ( ! is_array( $data['translations'] ) ) {
-			$data['translations'] = array();
+		$translations = $this->project_translations_check( $data['item'], $locales );
+		if ( empty( $translations ) ) {
+			return new WP_Error( 'no_translations', __( 'No translations found for the specified item and locales.', 'gp-translate-update-api' ), array( 'status' => 404 ) );
 		}
 
-		if ( empty( $data['plugins']['plugins'] ) && empty( $data['themes']['themes'] ) ) {
-			return new WP_Error( 'no_plugins_themes', __( 'No plugins or themes found.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
-		}
-
-		if ( ! is_array( $data['plugins']['plugins'] ) ) {
-			$data['plugins']['plugins'] = array();
-		}
-
-		if ( ! is_array( $data['themes']['themes'] ) ) {
-			$data['themes']['themes'] = array();
-		}
-
-		if ( ! empty( $data['plugins']['plugins'] ) ) {
-			return $this->plugin_translations_check( $data['plugins']['plugins'], $data['translations'], $locales );
-		}
-
-		if ( ! empty( $data['themes']['themes'] ) ) {
-			return $this->theme_translations_check( $data['themes']['themes'], $data['translations'], $locales );
-		}
-
-		$response = array(
-			'plugins'      => array(),
-			'themes'       => array(),
-			'translations' => array(),
-			'no_update'    => array(),
-		);
-
-		return new WP_REST_Response( $response, 200 );
+		return new WP_REST_Response( $translations, 200 );
 	}
 
 	/**
-	 * Check for plugin translations.
+	 * Check for project translations.
 	 *
-	 * @param array $plugins Plugins to check.
-	 * @param array $translations Existing translations.
-	 * @param array $locales Locales to check.
+	 * @param string $project Project to check.
+	 * @param array  $locales Locales to check.
 	 *
-	 * @return WP_REST_Response
+	 * @return array
 	 */
-	public function plugin_translations_check( array $plugins, array $translations, array $locales ): WP_REST_Response {
-		$response = array(
-			'plugins'      => array(),
-			'translations' => array(),
-			'no_update'    => array(),
-		);
+	public function project_translations_check( string $project, array $locales ): array {
+		// Standardize project path.
+		$project_path = ltrim( $project, '/projects' );
+		$project_path = rtrim( $project_path, '/' );
 
-		foreach ( $plugins as $plugin ) {
-			if ( ! isset( $plugin['TranslationsURI'] ) || ! isset( $plugin['TranslationsAPI'] ) ) {
+		$project = GP::$project->by_path( $project_path );
+		if ( ! $project ) {
+			gp_error_log( sprintf( 'Project not found: %s', $project_path ) );
+			return array();
+		}
+
+		$translation_sets = GP::$translation_set->by_project_id( $project->id );
+		if ( empty( $translation_sets ) ) {
+			gp_error_log( sprintf( 'No translation sets found for project: %s', $project_path ) );
+			return array();
+		}
+
+		$response = array();
+
+		foreach ( $locales as $locale ) {
+			$locale_obj = GP_Locales::by_slug( $locale );
+			if ( ! $locale_obj ) {
+				gp_error_log( sprintf( 'Locale not found: %s', $locale ) );
 				continue;
 			}
 
-			// Check if site_url host match TranslationsURI.
-			$site_url         = wp_parse_url( site_url() );
-			$translations_uri = wp_parse_url( $plugin['TranslationsURI'] );
-			if ( ! isset( $site_url['host'] ) || ! isset( $translations_uri['host'] ) ) {
-				continue;
-			}
-			if ( $site_url['host'] !== $translations_uri['host'] ) {
-				continue;
-			}
+			foreach ( $translation_sets as $translation_set ) {
+				if ( $locale !== $translation_set->locale ) {
+					continue;
+				}
 
-			// Get the project path from TranslationsURI.
-			$project_path = ltrim( '/projects', $translations_uri['path'] );
-			$project_path = rtrim( $project_path, '/' );
-
-			$project = GP::$project->by_path( $project_path );
-			if ( ! $project ) {
-				continue;
-			}
-
-			foreach ( $locales as $locale ) {
-				// TODO
+				$response[] = array(
+					'language' => $this->get_language_code( $locale_obj ),
+					'updated'  => GP::$translation->last_modified( $translation_set ),
+					'package'  => $this->get_download_url( $project_path, $locale, $translation_set->slug ),
+				);
 			}
 		}
 
-		return new WP_REST_Response( $response, 200 );
+		return $response;
 	}
 
 	/**
-	 * Check for theme translations.
+	 * Get download URL for the translation package.
 	 *
-	 * @param array $themes Themes to check.
-	 * @param array $translations Existing translations.
-	 * @param array $locales Locales to check.
+	 * @param string $project_path Project path.
+	 * @param string $locale Locale slug.
+	 * @param string $slug Slug of the translation set.
 	 *
-	 * @return WP_REST_Response
+	 * @return string
 	 */
-	public function theme_translations_check( array $themes, array $translations, array $locales ): WP_REST_Response {
-		$response = array(
-			'themes'       => array(),
-			'translations' => array(),
-			'no_update'    => array(),
+	protected function get_download_url( string $project_path, string $locale, string $slug ): string {
+		$project_path = ltrim( $project_path, '/' );
+		$project_path = rtrim( $project_path, '/' );
+
+		// Construct the download URL.
+		$projects_url = home_url( '/projects/' );
+		$download_url = sprintf(
+			$projects_url . '%1$s/%2$s/%3$s/export-translations/?format=zip',
+			$project_path,
+			$locale,
+			$slug
 		);
 
-		foreach ( $themes as $theme ) {
-			if ( ! isset( $plugin['TranslationsURI'] ) || ! isset( $plugin['TranslationsAPI'] ) ) {
-				continue;
-			}
+		return $download_url;
+	}
 
-			// Check if site_url host match TranslationsURI.
-			$site_url         = wp_parse_url( site_url() );
-			$translations_uri = wp_parse_url( $plugin['TranslationsURI'] );
-			if ( ! isset( $site_url['host'] ) || ! isset( $translations_uri['host'] ) ) {
-				continue;
-			}
-			if ( $site_url['host'] !== $translations_uri['host'] ) {
-				continue;
-			}
-
-			// Get the project path from TranslationsURI.
-			$project_path = ltrim( '/projects', $translations_uri['path'] );
-			$project_path = rtrim( $project_path, '/' );
-
-			$project = GP::$project->by_path( $project_path );
-			if ( ! $project ) {
-				continue;
-			}
-
-			foreach ( $locales as $locale ) {
-				// TODO
-			}
+	/**
+	 * Returns the language code for the given locale.
+	 *
+	 * @param GP_Locale $locale The locale object to get the language code for.
+	 *
+	 * @return string The language code.
+	 */
+	public function get_language_code( $locale ) {
+		if ( ! empty( $locale->wp_locale ) ) {
+			return $locale->wp_locale;
 		}
 
-		return new WP_REST_Response( $response, 200 );
+		if ( ! empty( $locale->facebook_locale ) ) {
+			return $locale->facebook_locale;
+		}
+
+		return $locale->slug;
 	}
 }
