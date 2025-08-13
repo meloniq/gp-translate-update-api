@@ -15,6 +15,48 @@ namespace Meloniq\GpTranslateUpdateApi;
 class Mock {
 
 	/**
+	 * Get the request arguments for the GP Updater request.
+	 *
+	 * @return array The request arguments.
+	 */
+	public static function get_gp_updater_request_args() {
+		$args = array(
+			'timeout' => 10,
+			'body'    => array(
+				'item'   => 'meloniq/wp-send-sms',
+				'locale' => array(
+					'pl_PL',
+					'de_DE',
+				),
+			),
+		);
+
+		return $args;
+	}
+
+	/**
+	 * Get the response body for the GP Updater request.
+	 *
+	 * @return array The response body.
+	 */
+	public static function get_gp_updater_response_body() {
+		$response = array(
+			array(
+				'language' => 'pl_PL',
+				'updated'  => '2024-06-07 12:25:49',
+				'package'  => 'https://downloads.wordpress.org/translation/plugin/glotpress/4.0.1/pl_PL.zip',
+			),
+			array(
+				'language' => 'de_DE',
+				'updated'  => '2024-06-07 12:25:49',
+				'package'  => 'https://downloads.wordpress.org/translation/plugin/glotpress/4.0.1/de_DE.zip',
+			),
+		);
+
+		return $response;
+	}
+
+	/**
 	 * Get the request arguments for the update themes request.
 	 *
 	 * @return array The request arguments.
