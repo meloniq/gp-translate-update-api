@@ -3,8 +3,5 @@
 	<description>GP Translate Update API rules for PHP_CodeSniffer</description>
 
 	<rule ref="WordPress">
-		<exclude name="WordPress.WP.I18n.NonSingularStringLiteralDomain" />
-		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
-		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
 	</rule>
 </ruleset>

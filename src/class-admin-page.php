@@ -10,7 +10,7 @@ namespace Meloniq\GpTranslateUpdateApi;
 /**
  * Admin Page class.
  */
-class AdminPage {
+class Admin_Page {
 
 	/**
 	 * Constructor.

@@ -17,6 +17,10 @@
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Text Domain:       gp-translate-update-api
+ *
+ * Requires Plugins:  glotpress, gp-format-zip
+ *
+ * @package Meloniq\GpTranslateUpdateApi
  */
 
 namespace Meloniq\GpTranslateUpdateApi;
@@ -32,10 +36,6 @@ define( 'GPTUA_TD', 'gp-translate-update-api' );
 define( 'GPTUA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'GPTUA_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 
-// Include the autoloader so we can dynamically include the rest of the classes.
-require_once trailingslashit( __DIR__ ) . 'vendor/autoload.php';
-
-
 /**
  * Setup plugin data.
  *
@@ -44,26 +44,15 @@ require_once trailingslashit( __DIR__ ) . 'vendor/autoload.php';
 function setup() {
 	global $gptua_translate;
 
+	require_once trailingslashit( __DIR__ ) . 'src/class-admin-page.php';
+	require_once trailingslashit( __DIR__ ) . 'src/class-settings.php';
+	require_once trailingslashit( __DIR__ ) . 'src/class-rest.php';
+
 	$gptua_translate['admin-page'] = new AdminPage();
 	$gptua_translate['settings']   = new Settings();
 	$gptua_translate['rest']       = new Rest();
 }
 add_action( 'after_setup_theme', 'Meloniq\GpTranslateUpdateApi\setup' );
-
-/**
- * GP Init Setup.
- *
- * @return void
- */
-function gp_init() {
-	global $gptua_translate;
-
-	// Register the format with GlotPress.
-	GP::$formats['zip'] = new FormatZip();
-
-	$gptua_translate['format-zip'] = GP::$formats['zip'];
-}
-add_action( 'gp_init', 'Meloniq\GpTranslateUpdateApi\gp_init' );
 
 /**
  * Error logging.
@@ -78,8 +67,8 @@ function gp_error_log( $message ) {
 	}
 
 	if ( is_array( $message ) || is_object( $message ) ) {
-		error_log( print_r( $message, true ) );
+		error_log( print_r( $message, true ) ); // phpcs:ignore
 	} else {
-		error_log( $message );
+		error_log( $message ); // phpcs:ignore
 	}
 }
