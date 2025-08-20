@@ -21,6 +21,8 @@ use GP_Locales;
  */
 class Rest extends WP_REST_Controller {
 
+	use Helper;
+
 	/**
 	 * Constructor.
 	 *
@@ -167,24 +169,5 @@ class Rest extends WP_REST_Controller {
 		);
 
 		return $download_url;
-	}
-
-	/**
-	 * Returns the language code for the given locale.
-	 *
-	 * @param GP_Locale $locale The locale object to get the language code for.
-	 *
-	 * @return string The language code.
-	 */
-	public function get_language_code( $locale ) {
-		if ( ! empty( $locale->wp_locale ) ) {
-			return $locale->wp_locale;
-		}
-
-		if ( ! empty( $locale->facebook_locale ) ) {
-			return $locale->facebook_locale;
-		}
-
-		return $locale->slug;
 	}
 }

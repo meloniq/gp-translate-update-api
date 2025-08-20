@@ -44,12 +44,15 @@ define( 'GPTUA_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 function setup() {
 	global $gptua_translate;
 
+	require_once trailingslashit( __DIR__ ) . 'src/trait-helper.php';
 	require_once trailingslashit( __DIR__ ) . 'src/class-admin-page.php';
 	require_once trailingslashit( __DIR__ ) . 'src/class-settings.php';
+	require_once trailingslashit( __DIR__ ) . 'src/class-core.php';
 	require_once trailingslashit( __DIR__ ) . 'src/class-rest.php';
 
 	$gptua_translate['admin-page'] = new Admin_Page();
 	$gptua_translate['settings']   = new Settings();
+	$gptua_translate['core']       = new Core();
 	$gptua_translate['rest']       = new Rest();
 }
 add_action( 'after_setup_theme', 'Meloniq\GpTranslateUpdateApi\setup' );
