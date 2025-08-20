@@ -40,7 +40,7 @@ class Rest extends WP_REST_Controller {
 	public function register_routes(): void {
 		register_rest_route(
 			'gp/translations',
-			'/update-check/1.1',
+			'/update-check/0.1',
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'handle_update_check' ),
@@ -73,6 +73,12 @@ class Rest extends WP_REST_Controller {
 			return new WP_Error( 'invalid_locale', __( 'Invalid locale data.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
 		}
 
+		// What are the current translations for the item.
+		if ( ! isset( $data['translations'] ) || ! is_array( $data['translations'] ) ) {
+			return new WP_Error( 'invalid_translations', __( 'Invalid translations data.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
+		}
+		$current_translations = $data['translations'];
+
 		$locales           = array();
 		$supported_locales = wp_list_pluck( GP_Locales::locales(), 'slug' );
 		foreach ( $data['locale'] as $locale ) {
@@ -88,12 +94,15 @@ class Rest extends WP_REST_Controller {
 			return new WP_Error( 'no_locales', __( 'No supported locales found.', 'gp-translate-update-api' ), array( 'status' => 400 ) );
 		}
 
-		$translations = $this->project_translations_check( $data['item'], $locales );
-		if ( empty( $translations ) ) {
+		$update_translations = $this->project_translations_check( $data['item'], $locales );
+		if ( empty( $update_translations ) ) {
 			return new WP_Error( 'no_translations', __( 'No translations found for the specified item and locales.', 'gp-translate-update-api' ), array( 'status' => 404 ) );
 		}
 
-		return new WP_REST_Response( $translations, 200 );
+		// Filter out translations that are already up-to-date.
+		$final_translations = $this->exclude_up_to_date_translations( $update_translations, $current_translations );
+
+		return new WP_REST_Response( $final_translations, 200 );
 	}
 
 	/**
@@ -144,6 +153,43 @@ class Rest extends WP_REST_Controller {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Exclude translations that are already up-to-date.
+	 *
+	 * @param array $update_translations Translations to check.
+	 * @param array $current_translations Current translations.
+	 *
+	 * @return array Filtered translations.
+	 */
+	protected function exclude_up_to_date_translations( array $update_translations, array $current_translations ): array {
+		$filtered_translations = array();
+
+		// No updates to filter, return as is.
+		if ( empty( $update_translations ) || empty( $current_translations ) ) {
+			return $update_translations;
+		}
+
+		foreach ( $update_translations as $update_translation ) {
+			$update_locale = $update_translation['language'];
+			$update_date   = strtotime( $update_translation['updated'] );
+
+			foreach ( $current_translations as $current_locale => $current_translation ) {
+				$current_date = strtotime( $current_translation['PO-Revision-Date'] );
+
+				if ( $update_locale !== $current_locale ) {
+					continue;
+				}
+
+				if ( $update_date > $current_date ) {
+					$filtered_translations[] = $update_translation;
+					break; // No need to check further for this locale.
+				}
+			}
+		}
+
+		return $filtered_translations;
 	}
 
 	/**
