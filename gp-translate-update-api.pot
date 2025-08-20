@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GP Translate Update API\n"
-"POT-Creation-Date: 2025-04-18 12:02+0100\n"
+"POT-Creation-Date: 2025-08-20 17:45+0200\n"
 "PO-Revision-Date: 2025-04-18 11:59+0100\n"
 "Last-Translator: MELONIQ.NET\n"
 "Language-Team: MELONIQ.NET\n"
@@ -11,11 +11,54 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 3.5\n"
-"X-Poedit-KeywordsList: __;_e;_n:1,2;_nx:1,2;_x:1,2c;_ex:1,2c;esc_attr__;"
-"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;"
-"_n_noop:1,2;_nx_noop:1,2,3c\n"
+"X-Generator: Poedit 3.6\n"
+"X-Poedit-KeywordsList: "
+"__;_e;_n:1,2;_nx:1,2;_x:1,2c;_ex:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;_nx_noop:1,2,3c\n"
 "X-Poedit-Basepath: .\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-SearchPath-0: .\n"
 
+#: src/class-admin-page.php:32 src/class-admin-page.php:33
+#: src/class-admin-page.php:48
+msgid "GP Translate Update API"
+msgstr ""
+
+#: src/class-rest.php:64
+msgid "Invalid data received."
+msgstr ""
+
+#: src/class-rest.php:68
+msgid "Invalid item data."
+msgstr ""
+
+#: src/class-rest.php:73
+msgid "Invalid locale data."
+msgstr ""
+
+#: src/class-rest.php:78
+msgid "Invalid translations data."
+msgstr ""
+
+#: src/class-rest.php:94
+msgid "No supported locales found."
+msgstr ""
+
+#: src/class-rest.php:99
+msgid "No translations found for the specified item and locales."
+msgstr ""
+
+#: src/class-settings.php:35
+msgid "Update API"
+msgstr ""
+
+#: src/class-settings.php:50
+msgid "Settings for Update API access."
+msgstr ""
+
+#: src/class-settings.php:67 src/class-settings.php:78
+msgid "Update API Key"
+msgstr ""
+
+#: src/class-settings.php:68 src/class-settings.php:99
+msgid "Enter the Update API Key."
+msgstr ""
