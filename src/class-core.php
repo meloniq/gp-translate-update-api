@@ -36,7 +36,7 @@ class Core {
 	 * @return string Modified file name.
 	 */
 	public function modify_zip_file_name( string $file_name, GP_Project $project, GP_Locale $locale ): string {
-		if ( ! isset( $_GET['textdomain'] ) || empty( $_GET['textdomain'] ) ) { // phpcs:ignore
+		if ( empty( $_GET['textdomain'] ) || ! is_string( $_GET['textdomain'] ) ) { // phpcs:ignore
 			return $file_name;
 		}
 
